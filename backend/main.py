@@ -1,17 +1,43 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from routers import auth, chat, posts, search
+import sys
+import os
+
+# --------------------------
+# Make sure routers outside backend can be imported
+# --------------------------
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# --------------------------
+# Import routers and DB
+# --------------------------
+from routers import auth, chat, posts, search, admin  # admin optional if you have it
 from database import metadata, engine
 
-app = FastAPI()
+# --------------------------
+# Create FastAPI app
+# --------------------------
+app = FastAPI(title="Mega App Backend")
 
-# Create tables
+# --------------------------
+# Create tables (if not exist)
+# --------------------------
 metadata.create_all(engine)
 
+# --------------------------
 # Include routers
-app.include_router(auth.router)
-app.include_router(chat.router)
-app.include_router(posts.router)
-app.include_router(search.router)
+# --------------------------
+app.include_router(auth.router, prefix="/auth", tags=["auth"])
+app.include_router(chat.router, prefix="/chat", tags=["chat"])
+app.include_router(posts.router, prefix="/posts", tags=["posts"])
+app.include_router(search.router, prefix="/search", tags=["search"])
+app.include_router(admin.router, prefix="/admin", tags=["admin"])  # optional
+
+# --------------------------
+# Root endpoint
+# --------------------------
+@app.get("/")
+def root():
+    return {"status": "running", "message": "Welcome to Mega App API"}
 
 # Simple WebSocket connection manager
 class ConnectionManager:
